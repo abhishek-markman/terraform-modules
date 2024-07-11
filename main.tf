@@ -1,5 +1,5 @@
 locals {
-  name_prefix = "${var.unique_name}-${var.location}-${var.location}"
+  name_prefix = "${var.unique_name}-${var.environment}-${var.location}"
 }
 
 resource "azurerm_resource_group" "main_rg" {
@@ -11,12 +11,15 @@ module "vnet" {
   source = "./modules/virtual_network"
 
   resource_group_name = azurerm_resource_group.main_rg.name
-  use_for_each        = true
   vnet_name           = "${local.name_prefix}-vnet"
   vnet_location       = var.location
   address_space       = ["10.0.0.0/16"]
-  subnet_prefixes     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  subnet_names        = ["subnet1", "subnet2", "subnet3"]
+  subnet_names = {
+    subnet1 = {
+      subnet_name           = "${local.name_prefix}-vnet-web-subnet"
+      subnet_names_prefixes = ["10.0.1.0/24"]
+    }
+  }
 
   tags = {
     environment  = "dev"

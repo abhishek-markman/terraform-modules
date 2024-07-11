@@ -4,12 +4,6 @@ variable "resource_group_name" {
   nullable    = false
 }
 
-variable "use_for_each" {
-  type        = bool
-  description = "Use `for_each` instead of `count` to create multiple resource instances."
-  nullable    = false
-}
-
 variable "vnet_location" {
   type        = string
   description = "The location of the vnet to create."
@@ -57,40 +51,22 @@ variable "route_tables_ids" {
   description = "A map of subnet name to Route table ids"
 }
 
-variable "subnet_delegation" {
-  type        = map(map(any))
-  default     = {}
-  description = "A map of subnet name to delegation block on the subnet"
-}
-
-variable "subnet_enforce_private_link_endpoint_network_policies" {
-  type        = map(bool)
-  default     = {}
-  description = "A map of subnet name to enable/disable private link endpoint network policies on the subnet."
-}
-
-variable "subnet_enforce_private_link_service_network_policies" {
-  type        = map(bool)
-  default     = {}
-  description = "A map of subnet name to enable/disable private link service network policies on the subnet."
-}
-
 variable "subnet_names" {
-  type        = list(string)
-  default     = ["subnet1", "subnet2", "subnet3"]
-  description = "A list of public subnets inside the vNet."
-}
-
-variable "subnet_prefixes" {
-  type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  description = "The address prefix to use for the subnet."
-}
-
-variable "subnet_service_endpoints" {
-  type        = map(any)
+  type        = any
   default     = {}
-  description = "A map of subnet name to service endpoints to add to the subnet."
+  description = "A list of subnets inside the vNet."
+}
+
+variable "nsg_subnet_association" {
+  type        = any
+  default     = {}
+  description = "NSG details to be associated to subnet"
+}
+
+variable "subnet_route_table_association" {
+  type        = any
+  default     = {}
+  description = "Route table details to be associated to subnet"
 }
 
 variable "tags" {

@@ -17,30 +17,19 @@ resource "azurerm_virtual_network" "vnet" {
   }
 }
 
-moved {
-  from = azurerm_subnet.subnet
-  to   = azurerm_subnet.subnet_count
-}
+resource "azurerm_subnet" "subnet" {
+  for_each = var.subnet_names
 
-locals {
-  subnet_names_prefixes = zipmap(var.subnet_names, var.subnet_prefixes)
-}
-
-resource "azurerm_subnet" "subnet_count" {
-  count = var.use_for_each ? 0 : length(var.subnet_names)
-
-  address_prefixes                               = [var.subnet_prefixes[count.index]]
-  name                                           = var.subnet_names[count.index]
-  resource_group_name                            = var.resource_group_name
-  virtual_network_name                           = azurerm_virtual_network.vnet.name
-  enforce_private_link_endpoint_network_policies = lookup(var.subnet_enforce_private_link_endpoint_network_policies, var.subnet_names[count.index], false)
-  enforce_private_link_service_network_policies  = lookup(var.subnet_enforce_private_link_service_network_policies, var.subnet_names[count.index], false)
-  service_endpoints                              = lookup(var.subnet_service_endpoints, var.subnet_names[count.index], null)
-  private_endpoint_network_policies_enabled      = lookup(var.private_link_endpoint_enabled, each.value, false)
-  private_link_service_network_policies_enabled  = lookup(var.private_link_service_enabled, each.value, false)
+  address_prefixes                              = each.value.subnet_names_prefixes
+  name                                          = each.value.subnet_name
+  resource_group_name                           = var.resource_group_name
+  virtual_network_name                          = azurerm_virtual_network.vnet.name
+  service_endpoints                             = try(each.value.subnet_service_endpoints, null)
+  private_endpoint_network_policies             = try(each.value.private_link_endpoint_enabled, "Disabled")
+  private_link_service_network_policies_enabled = try(each.value.private_link_endpoint_enabled, false)
 
   dynamic "delegation" {
-    for_each = lookup(var.subnet_delegation, var.subnet_names[count.index], {})
+    for_each = try(each.value.subnet_delegation, {})
 
     content {
       name = delegation.key
@@ -53,51 +42,14 @@ resource "azurerm_subnet" "subnet_count" {
   }
 }
 
-resource "azurerm_subnet" "subnet_for_each" {
-  for_each = var.use_for_each ? toset(var.subnet_names) : []
-
-  address_prefixes                               = [local.subnet_names_prefixes[each.value]]
-  name                                           = each.value
-  resource_group_name                            = var.resource_group_name
-  virtual_network_name                           = azurerm_virtual_network.vnet.name
-  enforce_private_link_endpoint_network_policies = lookup(var.subnet_enforce_private_link_endpoint_network_policies, each.value, false)
-  enforce_private_link_service_network_policies  = lookup(var.subnet_enforce_private_link_service_network_policies, each.value, false)
-  service_endpoints                              = lookup(var.subnet_service_endpoints, each.value, null)
-  private_endpoint_network_policies_enabled      = lookup(var.private_link_endpoint_enabled, each.value, false)
-  private_link_service_network_policies_enabled  = lookup(var.private_link_service_enabled, each.value, false)
-
-  dynamic "delegation" {
-    for_each = lookup(var.subnet_delegation, each.value, {})
-
-    content {
-      name = delegation.key
-
-      service_delegation {
-        name    = lookup(delegation.value, "service_name")
-        actions = lookup(delegation.value, "service_actions", [])
-      }
-    }
-  }
+resource "azurerm_subnet_network_security_group_association" "subnet_association" {
+  for_each                  = var.nsg_subnet_association
+  subnet_id                 = azurerm_subnet.subnet[each.value.subnet_key].id
+  network_security_group_id = each.value.network_security_group_id
 }
 
-locals {
-  azurerm_subnets = var.use_for_each ? [for s in azurerm_subnet.subnet_for_each : s] : [for s in azurerm_subnet.subnet_count : s]
-  azurerm_subnets_name_id_map = {
-    for index, subnet in local.azurerm_subnets :
-    subnet.name => subnet.id
-  }
-}
-
-resource "azurerm_subnet_network_security_group_association" "vnet" {
-  for_each = var.nsg_ids
-
-  network_security_group_id = each.value
-  subnet_id                 = local.azurerm_subnets_name_id_map[each.key]
-}
-
-resource "azurerm_subnet_route_table_association" "vnet" {
-  for_each = var.route_tables_ids
-
-  route_table_id = each.value
-  subnet_id      = local.azurerm_subnets_name_id_map[each.key]
+resource "azurerm_subnet_route_table_association" "route_table_association" {
+  for_each       = var.subnet_route_table_association
+  subnet_id      = azurerm_subnet.subnet[each.value.subnet_key].id
+  route_table_id = each.value.route_table_id
 }
