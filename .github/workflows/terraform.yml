@@ -46,7 +46,7 @@ jobs:
           az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
           az account set --subscription $ARM_SUBSCRIPTION_ID
 
-      - name: Install Terraform
+      - name: Install Terraform package
         uses: hashicorp/setup-terraform@v2.0.3
         with:
           terraform_version: 1.6.6
