@@ -20,12 +20,6 @@ jobs:
         id: checkout
         uses: actions/checkout@v4.1.1
 
-      - name: Azure Authentication
-        id: login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZJSON }}
-
       - name: JSON Parse
         id: parse
         env:
@@ -45,6 +39,12 @@ jobs:
           echo RESOURCE_GROUP=$RESOURCE_GROUP >> $GITHUB_ENV
           echo STORAGE_ACCOUNT=$STORAGE_ACCOUNT >> $GITHUB_ENV
           echo CONTAINER_NAME=$CONTAINER_NAME >> $GITHUB_ENV
+    
+      - name: Azure Authentication
+        id: login
+        run: |
+          az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+          az account set --subscription $ARM_SUBSCRIPTION_ID
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2.0.3
