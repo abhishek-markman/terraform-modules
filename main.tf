@@ -11,7 +11,7 @@ module "vnet" {
   source = "./modules/virtual_network"
 
   resource_group_name = azurerm_resource_group.main_rg.name
-  use_for_each        = var.use_for_each
+  use_for_each        = true
   vnet_name           = "${local.name_prefix}-vnet"
   vnet_location       = var.location
   address_space       = ["10.0.0.0/16"]
