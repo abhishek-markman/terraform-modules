@@ -3,7 +3,7 @@ locals {
 }
 
 resource "azurerm_resource_group" "main_rg" {
-  name     = "${var.name_prefix}-rg"
+  name     = "${local.name_prefix}-rg"
   location = var.location
 }
 
