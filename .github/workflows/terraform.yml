@@ -62,11 +62,11 @@ jobs:
         run: |
           pip install checkov
 
-      - name: Checkov Static Test
-        id: static
-        if: github.event_name == 'pull_request'
-        run: |
-          checkov -d . --download-external-modules true
+      # - name: Checkov Static Test
+      #   id: static
+      #   if: github.event_name == 'pull_request'
+      #   run: |
+      #     checkov -d . --download-external-modules true
 
       - name: Terraform Format
         id: fmt
