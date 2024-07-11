@@ -1,36 +1,25 @@
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.0"
-    }
-  }
-  backend "azurerm" {
-    key = "github.terraform.tfstate"
-  }
-}
-
-provider "azurerm" {
-  features {}
+locals {
+  name_prefix = "${var.unique_name}-${var.location}-${var.location}"
 }
 
 resource "azurerm_resource_group" "main_rg" {
-  name     = "test-dev-eastus-rg"
-  location = "eastus"
+  name     = "${var.name_prefix}-rg"
+  location = var.location
 }
 
-output "resource_group_name" {
-  value       = azurerm_resource_group.main_rg.name
-  description = "Resource group name"
-}
+module "vnet" {
+  source = "./modules/virtual_network"
 
-output "resource_group_id" {
-  value       = azurerm_resource_group.main_rg.id
-  description = "Resource group generated id"
-}
+  resource_group_name = azurerm_resource_group.main_rg.name
+  use_for_each        = var.use_for_each
+  vnet_name           = "${var.name_prefix}-vnet"
+  vnet_location       = var.location
+  address_space       = ["10.0.0.0/16"]
+  subnet_prefixes     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  subnet_names        = ["subnet1", "subnet2", "subnet3"]
 
-output "resource_group_location" {
-  value       = azurerm_resource_group.main_rg.location
-  description = "Resource group location (region)"
+  tags = {
+    environment = "dev"
+    DeployedFrom = "terraform"
+  }
 }
