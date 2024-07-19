@@ -4,7 +4,7 @@ variable "resource_group_name" {
   nullable    = false
 }
 
-variable "vnet_location" {
+variable "location" {
   type        = string
   description = "The location of the vnet to create."
   nullable    = false
