@@ -59,9 +59,10 @@ module "postgresql_flexible" {
       charset   = "UTF8"
     }
   }
-  # allowed_cidrs = {
-  #   "1" = "10.0.0.0/16"
-  # }
+  allowed_cidrs = {
+    "startIpAddress" = "0.0.0.0"
+    "endIpAddress"   = "0.0.0.0"
+  }
 }
 
 module "app_service_plan" {
