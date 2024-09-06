@@ -24,7 +24,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: 'dev'
+        working-directory: ${{ inputs.environment }}
 
     steps:
       - name: Code Checkout

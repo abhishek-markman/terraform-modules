@@ -74,12 +74,62 @@ module "app_service_plan" {
   worker_count          = 2
 }
 
+module "key_vault" {
+  source              = "../modules/key_vault"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main_rg.name
+  key_vault_name      = "${local.name_prefix}-kv"
+}
+
+module "azuread_application" {
+  source                        = "../modules/azuread_application"
+  name                          = "${local.name_prefix}-app"
+  redirect_uris                 = ["https://${local.name_prefix}-webapp.azurewebsites.net/", "https://${local.name_prefix}-webapp.azurewebsites.net/login/callback", "https://dev.laurel-ag.biz/", "https://dev.laurel-ag.biz/login/callback/", "https://laurel-hsfd.onrender.com/", "http://localhost:8000/accounts/microsoft/login/callback/"]
+  access_token_issuance_enabled = true
+  id_token_issuance_enabled     = true
+  key_vault_id                  = module.key_vault.key_vault_id
+  required_resource_access = [
+    {
+      resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
+      resource_access = [
+        {
+          id   = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0" # email permission
+          type = "Scope"
+        },
+        {
+          id   = "14dad69e-099b-42c9-810b-d002981feec1" # profile permission
+          type = "Scope"
+        },
+        {
+          id   = "e1fe6dd8-ba31-4d61-89e7-88639da4683d" # user.read permission
+          type = "Scope"
+        }
+      ]
+    }
+  ]
+  access_token = [
+    {
+      name = "email"
+    },
+    {
+      name = "upn"
+    },
+    {
+      name = "family_name"
+    },
+    {
+      name = "given_name"
+    }
+  ]
+}
+
 module "linux_app_services" {
   source              = "../modules/linux_app_services"
   app_service_name    = "${local.name_prefix}-webapp"
   location            = var.location
   resource_group_name = azurerm_resource_group.main_rg.name
   service_plan_id     = module.app_service_plan.service_plan_id
+  key_vault_id        = module.key_vault.key_vault_id
   site_config = {
     always_on = false
     application_stack = {
@@ -87,20 +137,21 @@ module "linux_app_services" {
     }
   }
   app_settings = {
-    "ALLOWED_HOSTS"          = "${local.name_prefix}-webapp.azurewebsites.net,dev.laurel-ag.biz"
-    "CSRF_TRUSTED_ORIGINS"   = "https://${local.name_prefix}-webapp.azurewebsites.net,https://dev.laurel-ag.biz"
-    "AZURE_ACCOUNT_KEY"      = module.storage_account.storage_account_properties.primary_access_key
-    "AZURE_ACCOUNT_NAME"     = module.storage_account.storage_account_properties.name
-    "AZURE_CONTAINER"        = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
-    "DB_NAME"                = "${local.name_prefix}-db"
-    "DB_HOST"                = module.postgresql_flexible.postgresql_flexible_fqdn
-    "DB_USER"                = module.postgresql_flexible.postgresql_flexible_administrator_login
-    "DB_PASSWORD"            = module.postgresql_flexible.postgresql_flexible_administrator_password
-    "DB_PORT"                = 5432
-    "DJANGO_SETTINGS_MODULE" = "laurel.settings.${var.environment}"
-    "MICROSOFT_CLIENT_ID"    = "6fc8501d-2e9c-4bf2-8e34-e9dffb86d3b6"
-    "MICROSOFT_TENANT"       = "common"
-    "MICROSOFT_TENANT_ID"    = "11855f13-2464-464a-8e0a-b51873160cd3"
+    "ALLOWED_HOSTS"           = "${local.name_prefix}-webapp.azurewebsites.net,dev.laurel-ag.biz"
+    "CSRF_TRUSTED_ORIGINS"    = "https://${local.name_prefix}-webapp.azurewebsites.net,https://dev.laurel-ag.biz"
+    "AZURE_ACCOUNT_KEY"       = module.storage_account.storage_account_properties.primary_access_key
+    "AZURE_ACCOUNT_NAME"      = module.storage_account.storage_account_properties.name
+    "AZURE_CONTAINER"         = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
+    "DB_NAME"                 = "${local.name_prefix}-db"
+    "DB_HOST"                 = module.postgresql_flexible.postgresql_flexible_fqdn
+    "DB_USER"                 = module.postgresql_flexible.postgresql_flexible_administrator_login
+    "DB_PASSWORD"             = module.postgresql_flexible.postgresql_flexible_administrator_password
+    "DB_PORT"                 = 5432
+    "DJANGO_SETTINGS_MODULE"  = "laurel.settings.${var.environment}"
+    "MICROSOFT_CLIENT_ID"     = module.azuread_application.client_id
+    "MICROSOFT_TENANT"        = "common"
+    "MICROSOFT_TENANT_ID"     = module.azuread_application.tenant_id
+    "MICROSOFT_CLIENT_SECRET" = "@Microsoft.KeyVault(SecretUri=${module.azuread_application.client_secret_id})"
   }
   app_service_logs = {
     detailed_error_messages = false

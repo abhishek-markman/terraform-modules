@@ -14,11 +14,4 @@ terraform {
       version = "~> 3.4.3"
     }
   }
-  backend "azurerm" {
-    key = "dev.terraform.tfstate"
-  }
-}
-
-provider "azurerm" {
-  features {}
 }

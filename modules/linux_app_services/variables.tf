@@ -289,6 +289,12 @@ variable "identity" {
   }
 }
 
+variable "key_vault_id" {
+  description = "Id of the key vault to access secret"
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   type = map(string)
   default = {
