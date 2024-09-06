@@ -24,6 +24,7 @@ jobs:
     defaults:
       run:
         shell: bash
+        working-directory: ${{ inputs.environment }}
 
     steps:
       - name: Code Checkout
@@ -62,7 +63,6 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Terraform Init
-        working-directory: ${{ inputs.environment }}
         id: init
         run: |
           terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP"
@@ -80,24 +80,20 @@ jobs:
       #     checkov -d . --download-external-modules true
 
       - name: Terraform Format
-        working-directory: ${{ inputs.environment }}
         id: fmt
         run: terraform fmt -check -recursive
         continue-on-error: true
 
       - name: Terraform Validate
-        working-directory: ${{ inputs.environment }}
         id: validate
         run: terraform validate -no-color
 
       - name: Terraform Plan
-        working-directory: ${{ inputs.environment }}
         id: tplan
         run: |
             terraform plan -no-color
 
       - name: Checkov Plan Test
-        working-directory: ${{ inputs.environment }}
         id: cplan
         if: github.event_name == 'pull_request'
         run: |
@@ -144,7 +140,6 @@ jobs:
             })
 
       # - name: Terraform Apply
-      #   working-directory: ${{ inputs.environment }}
       #   id: apply
       #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       #   run: terraform apply -auto-approve
