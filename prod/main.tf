@@ -87,20 +87,20 @@ module "linux_app_services" {
     }
   }
   app_settings = {
-    "ALLOWED_HOSTS"           = "${local.name_prefix}-webapp.azurewebsites.net,laurel-ag.biz"
-    "CSRF_TRUSTED_ORIGINS"    = "https://${local.name_prefix}-webapp.azurewebsites.net,https://laurel-ag.biz"
-    "AZURE_ACCOUNT_KEY"       = module.storage_account.storage_account_properties.primary_access_key
-    "AZURE_ACCOUNT_NAME"      = module.storage_account.storage_account_properties.name
-    "AZURE_CONTAINER"         = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
-    "DB_NAME"                 = "${local.name_prefix}-db"
-    "DB_HOST"                 = module.postgresql_flexible.postgresql_flexible_fqdn
-    "DB_USER"                 = module.postgresql_flexible.postgresql_flexible_administrator_login
-    "DB_PASSWORD"             = module.postgresql_flexible.postgresql_flexible_administrator_password
-    "DB_PORT"                 = 5432
-    "DJANGO_SETTINGS_MODULE"  = "laurel.settings.${var.environment}"
-    "MICROSOFT_CLIENT_ID"     = "6fc8501d-2e9c-4bf2-8e34-e9dffb86d3b6"
-    "MICROSOFT_TENANT"        = "common"
-    "MICROSOFT_TENANT_ID"     = "11855f13-2464-464a-8e0a-b51873160cd3"
+    "ALLOWED_HOSTS"          = "${local.name_prefix}-webapp.azurewebsites.net,laurel-ag.biz"
+    "CSRF_TRUSTED_ORIGINS"   = "https://${local.name_prefix}-webapp.azurewebsites.net,https://laurel-ag.biz"
+    "AZURE_ACCOUNT_KEY"      = module.storage_account.storage_account_properties.primary_access_key
+    "AZURE_ACCOUNT_NAME"     = module.storage_account.storage_account_properties.name
+    "AZURE_CONTAINER"        = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
+    "DB_NAME"                = "${local.name_prefix}-db"
+    "DB_HOST"                = module.postgresql_flexible.postgresql_flexible_fqdn
+    "DB_USER"                = module.postgresql_flexible.postgresql_flexible_administrator_login
+    "DB_PASSWORD"            = module.postgresql_flexible.postgresql_flexible_administrator_password
+    "DB_PORT"                = 5432
+    "DJANGO_SETTINGS_MODULE" = "laurel.settings.${var.environment}"
+    "MICROSOFT_CLIENT_ID"    = "6fc8501d-2e9c-4bf2-8e34-e9dffb86d3b6"
+    "MICROSOFT_TENANT"       = "common"
+    "MICROSOFT_TENANT_ID"    = "11855f13-2464-464a-8e0a-b51873160cd3"
   }
   app_service_logs = {
     detailed_error_messages = false
