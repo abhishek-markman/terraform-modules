@@ -54,7 +54,7 @@ variable "authorized_ips" {
 variable "public_network_access_enabled" {
   description = "Whether enable public access for the App Service."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "authorized_subnet_ids" {
