@@ -91,18 +91,18 @@ resource "azuread_service_principal_delegated_permission_grant" "this" {
 
 # Service Principal Client secret for the Application
 resource "azuread_application_password" "main" {
-  application_object_id = azuread_application.main.id
-  display_name          = "${var.name}-key"
-  start_date            = time_rotating.rotation_days.id
-  end_date              = timeadd(time_rotating.rotation_days.id, "4320h")
+  application_id = azuread_application.main.id
+  display_name   = "${var.name}-key"
+  start_date     = time_rotating.rotation_days.id
+  end_date       = timeadd(time_rotating.rotation_days.id, "4320h")
 }
 
 #----------------------------------------------------------
 # Resource creation: Key Vault Secret
 #----------------------------------------------------------
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
-  name            = "${var.name}-app-secret"
-  value           = azuread_application_password.main.value
-  key_vault_id    = var.key_vault_id
+  name         = "${var.name}-app-secret"
+  value        = azuread_application_password.main.value
+  key_vault_id = var.key_vault_id
 }
 

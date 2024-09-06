@@ -11,7 +11,7 @@ output "client_id" {
 output "client_secret_id" {
   description = "Client secret stored in Key vault secret ID."
   value       = azurerm_key_vault_secret.azuread_application_client_secret.id
-  sensitive = true
+  sensitive   = true
 }
 
 output "tenant_id" {
