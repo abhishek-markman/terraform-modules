@@ -137,11 +137,6 @@ resource "azurerm_storage_account" "storage" {
   }
 }
 
-resource "azurerm_advanced_threat_protection" "threat_protection" {
-  enabled            = var.advanced_threat_protection_enabled
-  target_resource_id = azurerm_storage_account.storage.id
-}
-
 # Network rules
 resource "azurerm_storage_account_network_rules" "network_rules" {
   for_each = toset(var.network_rules_enabled && !var.nfsv3_enabled ? ["enabled"] : [])
