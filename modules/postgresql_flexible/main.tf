@@ -84,10 +84,10 @@ resource "azurerm_postgresql_flexible_server_configuration" "postgresql_flexible
 }
 
 resource "azurerm_postgresql_flexible_server_firewall_rule" "firewall_rules" {
-  for_each = var.delegated_subnet_id == null ? var.allowed_cidrs == null ? {} : var.allowed_cidrs : {}
+  for_each = var.allowed_ip_ranges
 
   name             = each.key
   server_id        = azurerm_postgresql_flexible_server.postgresql_flexible_server.id
-  start_ip_address = cidrhost(each.value, 0)
-  end_ip_address   = cidrhost(each.value, -1)
+  start_ip_address = each.value.start_ip
+  end_ip_address   = each.value.end_ip
 }

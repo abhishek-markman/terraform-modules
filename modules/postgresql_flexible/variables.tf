@@ -115,9 +115,12 @@ variable "postgresql_configurations" {
   default     = {}
 }
 
-variable "allowed_cidrs" {
-  description = "Map of authorized cidrs."
-  type        = map(string)
+variable "allowed_ip_ranges" {
+  description = "Map of firewall rules with start and end IP addresses."
+  type        = map(object({
+    start_ip = string
+    end_ip   = string
+  }))
   default     = {}
 }
 
