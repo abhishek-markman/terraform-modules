@@ -242,7 +242,7 @@ variable "subnet_ids" {
 variable "default_firewall_action" {
   description = "Which default firewalling policy to apply. Valid values are `Allow` or `Deny`."
   type        = string
-  default     = "Deny"
+  default     = "Allow"
 }
 
 variable "private_link_access" {

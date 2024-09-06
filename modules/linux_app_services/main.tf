@@ -16,6 +16,12 @@ resource "azurerm_application_insights" "app_insights" {
   tags                                  = var.tags
 }
 
+resource "azurerm_role_assignment" "webapp_sp_read_access_to_kv" {
+  principal_id         = azurerm_linux_web_app.app_service_linux.identity[0].principal_id
+  role_definition_name = "Key Vault Secrets User"
+  scope                = var.key_vault_id
+}
+
 resource "azurerm_linux_web_app" "app_service_linux" {
   name                = var.app_service_name
   location            = var.location
@@ -357,7 +363,9 @@ resource "azurerm_linux_web_app" "app_service_linux" {
 
   lifecycle {
     ignore_changes = [
+      tags,
       backup[0].storage_account_url,
+      site_config[0].app_command_line
     ]
   }
 }

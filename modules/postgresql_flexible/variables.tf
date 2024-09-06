@@ -118,6 +118,7 @@ variable "postgresql_configurations" {
 variable "allowed_cidrs" {
   description = "Map of authorized cidrs."
   type        = map(string)
+  default     = {}
 }
 
 variable "public_network_access_enabled" {

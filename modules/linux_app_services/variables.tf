@@ -54,7 +54,7 @@ variable "authorized_ips" {
 variable "public_network_access_enabled" {
   description = "Whether enable public access for the App Service."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "authorized_subnet_ids" {
@@ -108,7 +108,7 @@ variable "client_affinity_enabled" {
 variable "https_only" {
   description = "HTTPS restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#https_only"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "client_certificate_enabled" {
@@ -287,6 +287,12 @@ variable "identity" {
     type         = "SystemAssigned"
     identity_ids = []
   }
+}
+
+variable "key_vault_id" {
+  description = "Id of the key vault to access secret"
+  type        = string
+  default     = null
 }
 
 variable "tags" {
