@@ -59,9 +59,11 @@ module "postgresql_flexible" {
       charset   = "UTF8"
     }
   }
-  allowed_cidrs = {
-    "startIpAddress" = "0.0.0.0"
-    "endIpAddress"   = "0.0.0.0"
+  allowed_ip_ranges = {
+    "allow_azure" = {
+      start_ip = "0.0.0.0"
+      end_ip   = "0.0.0.0"
+    }
   }
 }
 
