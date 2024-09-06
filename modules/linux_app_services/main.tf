@@ -357,7 +357,9 @@ resource "azurerm_linux_web_app" "app_service_linux" {
 
   lifecycle {
     ignore_changes = [
+      tags,
       backup[0].storage_account_url,
+      site_config[0].app_command_line
     ]
   }
 }

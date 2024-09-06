@@ -108,7 +108,7 @@ variable "client_affinity_enabled" {
 variable "https_only" {
   description = "HTTPS restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#https_only"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "client_certificate_enabled" {

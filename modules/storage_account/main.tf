@@ -28,7 +28,7 @@ resource "azurerm_storage_account" "storage" {
   sftp_enabled                      = var.sftp_enabled
   nfsv3_enabled                     = var.nfsv3_enabled
   is_hns_enabled                    = var.nfsv3_enabled || var.sftp_enabled ? true : var.hns_enabled
-  enable_https_traffic_only         = var.nfsv3_enabled ? false : var.https_traffic_only_enabled
+  https_traffic_only_enabled        = var.nfsv3_enabled ? false : var.https_traffic_only_enabled
   cross_tenant_replication_enabled  = var.cross_tenant_replication_enabled
   infrastructure_encryption_enabled = var.infrastructure_encryption_enabled
 
@@ -113,7 +113,7 @@ resource "azurerm_storage_account" "storage" {
   dynamic "network_rules" {
     for_each = var.nfsv3_enabled ? ["enabled"] : []
     content {
-      default_action             = "Deny"
+      default_action             = var.default_firewall_action
       bypass                     = var.network_bypass
       ip_rules                   = local.storage_ip_rules
       virtual_network_subnet_ids = var.subnet_ids
