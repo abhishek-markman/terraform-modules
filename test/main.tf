@@ -99,7 +99,6 @@ module "linux_app_services" {
     "DB_PORT"                 = 5432
     DJANGO_SETTINGS_MODULE    = "laurel.settings.dev"
     "MICROSOFT_CLIENT_ID"     = "6fc8501d-2e9c-4bf2-8e34-e9dffb86d3b6"
-    "MICROSOFT_CLIENT_SECRET" = "6Jm8Q~zczrIEv8ia-mCAwzq3jfDi6lAnQZk6SbO6"
     "MICROSOFT_TENANT"        = "common"
     "MICROSOFT_TENANT_ID"     = "11855f13-2464-464a-8e0a-b51873160cd3"
     #"DB_NAME"     = "${local.name_prefix}-db"
