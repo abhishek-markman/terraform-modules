@@ -87,7 +87,7 @@ module "key_vault" {
 module "azuread_application" {
   source                        = "../modules/azuread_application"
   name                          = "${local.name_prefix}-app"
-  redirect_uris                 = ["https://${local.name_prefix}-webapp.azurewebsites.net/", "https://${local.name_prefix}-webapp.azurewebsites.net/login/callback", "https://${local.name_prefix}-webapp.azurewebsites.net/accounts/microsoft/login/callback/", "https://laurel-ag.biz/", "https://laurel-ag.biz/login/callback/", "https://laurel-hsfd.onrender.com/", "http://localhost:8000/accounts/microsoft/login/callback/"]
+  redirect_uris                 = ["https://${local.name_prefix}-webapp.azurewebsites.net/", "https://${local.name_prefix}-webapp.azurewebsites.net/login/callback", "https://${local.name_prefix}-webapp.azurewebsites.net/accounts/microsoft/login/callback/", "https://laurel-ag.biz/", "https://laurel-ag.biz/login/callback/", "https://laurel-ag.biz/accounts/microsoft/login/callback/", "https://laurel-hsfd.onrender.com/", "http://localhost:8000/accounts/microsoft/login/callback/"]
   access_token_issuance_enabled = true
   id_token_issuance_enabled     = true
   key_vault_id                  = module.key_vault.key_vault_id
