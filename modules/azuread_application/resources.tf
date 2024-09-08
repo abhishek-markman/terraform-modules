@@ -97,6 +97,11 @@ resource "azuread_application_password" "main" {
   end_date       = timeadd(time_rotating.rotation_days.id, "4320h")
 }
 
+resource "time_sleep" "wait_for_azuread_secret_creation" {
+create_duration = "30s"
+depends_on      = [azuread_application_password.main]
+}
+
 #----------------------------------------------------------
 # Resource creation: Key Vault Secret
 #----------------------------------------------------------
@@ -104,5 +109,6 @@ resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   name         = "${var.name}-app-secret"
   value        = azuread_application_password.main.value
   key_vault_id = var.key_vault_id
+  depends_on = [ time_sleep.wait_for_azuread_secret_creation ]
 }
 

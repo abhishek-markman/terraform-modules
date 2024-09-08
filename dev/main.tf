@@ -87,7 +87,7 @@ module "key_vault" {
 module "azuread_application" {
   source                        = "../modules/azuread_application"
   name                          = "${local.name_prefix}-app"
-  redirect_uris                 = ["https://${local.name_prefix}-webapp.azurewebsites.net/", "https://${local.name_prefix}-webapp.azurewebsites.net/login/callback", "https://${local.name_prefix}-webapp.azurewebsites.net/accounts/microsoft/login/callback/","https://dev.laurel-ag.biz/", "https://dev.laurel-ag.biz/login/callback/", "https://laurel-hsfd.onrender.com/", "http://localhost:8000/accounts/microsoft/login/callback/"]
+  redirect_uris                 = ["https://${local.name_prefix}-webapp.azurewebsites.net/", "https://${local.name_prefix}-webapp.azurewebsites.net/login/callback", "https://${local.name_prefix}-webapp.azurewebsites.net/accounts/microsoft/login/callback/", "https://dev.laurel-ag.biz/", "https://dev.laurel-ag.biz/login/callback/", "https://laurel-hsfd.onrender.com/", "http://localhost:8000/accounts/microsoft/login/callback/"]
   access_token_issuance_enabled = true
   id_token_issuance_enabled     = true
   key_vault_id                  = module.key_vault.key_vault_id
@@ -166,4 +166,11 @@ module "linux_app_services" {
       }
     }
   }
+
+  enable_custom_domain_mapping = true
+  environment                  = var.environment
+  azure_dns_zone_name          = "laurel-ag.biz"
+  azure_dns_zone_name_rg_name  = "domain-rg"
+  cname_record_enabled         = true
+  cname_record                 = "dev"
 }
