@@ -209,27 +209,52 @@ variable "auth_settings_v2" {
   default     = {}
 }
 
-variable "custom_domains" {
-  description = <<EOD
-Custom domains and SSL certificates of the App Service. Could declare a custom domain with SSL binding. SSL certificate could be provided from an Azure Keyvault Certificate Secret or from a file with following attributes :
-```
-- certificate_name:                     Name of the stored certificate.
-- certificate_keyvault_certificate_id:  ID of the Azure Keyvault Certificate Secret.
-```
-EOD
-  type = map(object({
-    certificate_name                    = optional(string)
-    certificate_keyvault_certificate_id = optional(string)
-    certificate_thumbprint              = optional(string)
-  }))
-  default  = {}
-  nullable = false
+variable "enable_custom_domain_mapping" {
+  type        = bool
+  description = "Custom domain to be enabled"
+  default     = false
 }
 
-variable "certificates" {
-  description = "Certificates for custom domains"
-  type        = map(map(string))
-  default     = {}
+variable "environment" {
+  type        = string
+  description = "The Environment name."
+  default     = null
+}
+
+variable "azure_dns_zone_name" {
+  description = "The name of the existing DNS Zone."
+  type        = string
+  default     = null
+}
+
+variable "azure_dns_zone_name_rg_name" {
+  description = "Specifies the resource group where the DNS zone resource exists"
+  type        = string
+  default     = null
+}
+
+variable "cname_record_enabled" {
+  type        = bool
+  description = "Enable cname for the App service"
+  default     = false
+}
+
+variable "cname_record" {
+  description = "The name of the DNS CNAME Record."
+  type        = string
+  default     = null
+}
+
+variable "a_record_enabled" {
+  type        = bool
+  description = "Enable A record for the App service"
+  default     = false
+}
+
+variable "a_record" {
+  description = "The name of the DNS A Record."
+  type        = string
+  default     = null
 }
 
 variable "app_service_vnet_integration_subnet_id" {

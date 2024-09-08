@@ -117,11 +117,11 @@ variable "postgresql_configurations" {
 
 variable "allowed_ip_ranges" {
   description = "Map of firewall rules with start and end IP addresses."
-  type        = map(object({
+  type = map(object({
     start_ip = string
     end_ip   = string
   }))
-  default     = {}
+  default = {}
 }
 
 variable "public_network_access_enabled" {

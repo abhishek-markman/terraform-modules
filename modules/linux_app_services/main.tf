@@ -16,12 +16,6 @@ resource "azurerm_application_insights" "app_insights" {
   tags                                  = var.tags
 }
 
-resource "azurerm_role_assignment" "webapp_sp_read_access_to_kv" {
-  principal_id         = azurerm_linux_web_app.app_service_linux.identity[0].principal_id
-  role_definition_name = "Key Vault Secrets User"
-  scope                = var.key_vault_id
-}
-
 resource "azurerm_linux_web_app" "app_service_linux" {
   name                = var.app_service_name
   location            = var.location
@@ -370,6 +364,12 @@ resource "azurerm_linux_web_app" "app_service_linux" {
   }
 }
 
+resource "azurerm_role_assignment" "webapp_sp_read_access_to_kv" {
+  principal_id         = azurerm_linux_web_app.app_service_linux.identity[0].principal_id
+  role_definition_name = "Key Vault Secrets User"
+  scope                = var.key_vault_id
+}
+
 resource "azurerm_linux_web_app_slot" "app_service_linux_slot" {
   count = var.staging_slot_enabled ? 1 : 0
 
@@ -686,23 +686,56 @@ resource "azurerm_linux_web_app_slot" "app_service_linux_slot" {
   tags = var.tags
 }
 
-resource "azurerm_app_service_certificate" "app_service_certificate" {
-  for_each = var.certificates
+resource "azurerm_dns_txt_record" "domain_verification" {
+  count               = var.enable_custom_domain_mapping ? 1 : 0
+  name                = var.environment != null ? "asuid.${var.environment}.${var.azure_dns_zone_name}" : "asuid.${var.azure_dns_zone_name}"
+  zone_name           = var.azure_dns_zone_name
+  resource_group_name = var.azure_dns_zone_name_rg_name
+  ttl                 = 300
 
-  name                = lookup(each.value, "custom_name", each.key)
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  pfx_blob            = each.value.certificate_file != null ? filebase64(each.value.certificate_file) : null
-  password            = each.value.certificate_password
-  key_vault_secret_id = try(each.value.certificate_keyvault_certificate_id, null)
+  record {
+    value = azurerm_linux_web_app.app_service_linux.custom_domain_verification_id
+  }
 }
 
-resource "azurerm_app_service_custom_hostname_binding" "app_service_custom_hostname_binding" {
-  for_each = var.custom_domains
+resource "azurerm_dns_cname_record" "cname_record" {
+  count               = var.cname_record_enabled && var.enable_custom_domain_mapping ? 1 : 0
+  name                = var.cname_record
+  zone_name           = var.azure_dns_zone_name
+  resource_group_name = var.azure_dns_zone_name_rg_name
+  ttl                 = 300
+  record              = azurerm_linux_web_app.app_service_linux.default_hostname
 
-  hostname            = each.key
+  depends_on = [azurerm_dns_txt_record.domain_verification[0]]
+}
+
+resource "azurerm_dns_a_record" "a_record" {
+  count               = var.a_record_enabled && var.enable_custom_domain_mapping ? 1 : 0
+  name                = var.a_record
+  zone_name           = var.azure_dns_zone_name
+  resource_group_name = var.azure_dns_zone_name_rg_name
+  ttl                 = 300
+  records             = azurerm_linux_web_app.app_service_linux.outbound_ip_address_list
+  depends_on          = [azurerm_dns_txt_record.domain_verification[0]]
+}
+
+resource "azurerm_app_service_custom_hostname_binding" "hostname_binding" {
+  count               = var.enable_custom_domain_mapping ? 1 : 0
+  hostname            = var.environment != null ? "${var.environment}.${var.azure_dns_zone_name}" : var.azure_dns_zone_name
   app_service_name    = azurerm_linux_web_app.app_service_linux.name
   resource_group_name = var.resource_group_name
-  ssl_state           = lookup(each.value, "certificate_name", null) != null || lookup(each.value, "certificate_thumbprint", null) != null ? "SniEnabled" : null
-  thumbprint          = lookup(each.value, "certificate_thumbprint", null) != null ? each.value.certificate_thumbprint : lookup(each.value, "certificate_name", null) != null ? azurerm_app_service_certificate.app_service_certificate[each.value.certificate_name].thumbprint : null
+
+  depends_on = [azurerm_dns_cname_record.cname_record[0], azurerm_dns_a_record.a_record[0]]
+}
+
+resource "azurerm_app_service_managed_certificate" "hostname_certificate_binding" {
+  count                      = var.enable_custom_domain_mapping ? 1 : 0
+  custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.hostname_binding[0].id
+}
+
+resource "azurerm_app_service_certificate_binding" "certificate_binding" {
+  count               = var.enable_custom_domain_mapping ? 1 : 0
+  hostname_binding_id = azurerm_app_service_custom_hostname_binding.hostname_binding[0].id
+  certificate_id      = azurerm_app_service_managed_certificate.hostname_certificate_binding[0].id
+  ssl_state           = "SniEnabled"
 }
