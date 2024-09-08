@@ -688,7 +688,7 @@ resource "azurerm_linux_web_app_slot" "app_service_linux_slot" {
 
 resource "azurerm_dns_txt_record" "domain_verification" {
   count               = var.enable_custom_domain_mapping ? 1 : 0
-  name                = var.environment != null ? "asuid.${var.environment}.${var.azure_dns_zone_name}" : "asuid.${var.azure_dns_zone_name}"
+  name                = var.environment != null ? "asuid.${var.environment}" : "asuid"
   zone_name           = var.azure_dns_zone_name
   resource_group_name = var.azure_dns_zone_name_rg_name
   ttl                 = 300
