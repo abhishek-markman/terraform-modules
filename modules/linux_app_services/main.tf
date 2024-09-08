@@ -703,7 +703,7 @@ resource "azurerm_dns_cname_record" "cname_record" {
   name                = var.cname_record
   zone_name           = var.azure_dns_zone_name
   resource_group_name = var.azure_dns_zone_name_rg_name
-  ttl                 = 300
+  ttl                 = 60
   record              = azurerm_linux_web_app.app_service_linux.default_hostname
 
   depends_on = [azurerm_dns_txt_record.domain_verification[0]]
@@ -714,7 +714,7 @@ resource "azurerm_dns_a_record" "a_record" {
   name                = var.a_record
   zone_name           = var.azure_dns_zone_name
   resource_group_name = var.azure_dns_zone_name_rg_name
-  ttl                 = 300
+  ttl                 = 60
   records             = azurerm_linux_web_app.app_service_linux.outbound_ip_address_list
   depends_on          = [azurerm_dns_txt_record.domain_verification[0]]
 }

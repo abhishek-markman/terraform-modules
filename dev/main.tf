@@ -173,6 +173,4 @@ module "linux_app_services" {
   azure_dns_zone_name_rg_name  = "domain-rg"
   cname_record_enabled         = true
   cname_record                 = "dev"
-  a_record_enabled             = true
-  a_record                     = "dev"
 }
