@@ -30,36 +30,24 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform Plan and Apply'
+    name: 'Terraform'
     runs-on: 'ubuntu-latest'
     strategy:
       matrix:
         environment: [dev, prod]
-      fail-fast: false
-    defaults:
-      run:
-        shell: bash
-        working-directory: ${{ matrix.environment }}
+        fail-fast: false
 
     steps:
-      - name: Determine If Environment Should Run
-        id: check-env
-        run: |
-          if [[ $GITHUB_EVENT_PATH == *"dev"* ]]; then
-            echo "dev_changed=true" >> $GITHUB_ENV
-          fi
-          if [[ $GITHUB_EVENT_PATH == *"prod"* ]]; then
-            echo "prod_changed=true" >> $GITHUB_ENV
-        continue-on-error: true
-
-      - name: Set Deploy Environment for PR/Push
-        run: echo "DEPLOY_ENV=${{ matrix.environment }}" >> $GITHUB_ENV
-
-      - name: Checkout Code
+      - name: Code Checkout
         id: checkout
         uses: actions/checkout@v4.1.1
 
-      - name: Set Azure Environment Variables from JSON
+      - name: Set Environment
+        id: set-env
+        run: |
+          echo "DEPLOY_ENV=${{ matrix.environment }}" >> $GITHUB_ENV
+
+      - name: JSON Parse
         id: parse
         env:
           AZJSON: ${{ secrets.AZJSON }}
@@ -94,6 +82,7 @@ jobs:
         id: init
         run: |
           terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP"
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
 
       - name: Install Checkov
         id: checkov
@@ -111,16 +100,17 @@ jobs:
         id: fmt
         run: terraform fmt -check -recursive
         continue-on-error: true
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
 
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
 
       - name: Terraform Plan
         id: tplan
-        if: github.event_name == 'pull_request'
-        run: |
-          terraform plan -no-color
+        run: terraform plan -no-color
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
 
       - name: Checkov Plan Test
         id: cplan
@@ -128,8 +118,8 @@ jobs:
         run: |
           terraform plan --out tfplan.binary
           terraform show -json tfplan.binary > tfplan.json
-          ls
           checkov -f tfplan.json --framework terraform_plan
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
 
       - name: Pull Request Comment
         id: comment
@@ -168,9 +158,16 @@ jobs:
               body: output
             })
 
-      - name: Apply Terraform Changes (Only on Main)
+      - name: Terraform Apply
         id: apply
-        if: github.ref == 'refs/heads/main'
-        env:
-          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: terraform apply -auto-approve
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
+
+      - name: Wait for Approval
+        id: wait-approval
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Waiting for manual approval..."
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/${{ matrix.environment }}
