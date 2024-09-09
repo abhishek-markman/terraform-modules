@@ -2,9 +2,21 @@ name: "Terraform Infra Deploy Pipeline"
 
 on:
   pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - dev/*.tf
+      - prod/*.tf
   push:
     branches:
       - main
+    paths:
+      - dev/*.tf
+      - prod/*.tf
   workflow_dispatch:
     inputs:
       environment:
@@ -18,31 +30,36 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform'
+    name: 'Terraform Plan and Apply'
     runs-on: 'ubuntu-latest'
-
+    strategy:
+      matrix:
+        environment: [dev, prod]
+      fail-fast: false
     defaults:
       run:
         shell: bash
-        working-directory: ${{ env.DEPLOY_ENV }}
+        working-directory: ${{ matrix.environment }}
 
     steps:
-      - name: Set Environment for PR/Push
-        if: github.event_name != 'workflow_dispatch'  # This will execute if it's a push or PR
+      - name: Determine If Environment Should Run
+        id: check-env
         run: |
-          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "DEPLOY_ENV=dev" >> $GITHUB_ENV   # Set dev as default for push/PR
+          if [[ $GITHUB_EVENT_PATH == *"dev"* ]]; then
+            echo "dev_changed=true" >> $GITHUB_ENV
           fi
-      
-      - name: Set Environment for Manual Dispatch
-        if: github.event_name == 'workflow_dispatch'  # This will execute if manually triggered
-        run: echo "DEPLOY_ENV=${{ inputs.environment }}" >> $GITHUB_ENV  # Set based on input
+          if [[ $GITHUB_EVENT_PATH == *"prod"* ]]; then
+            echo "prod_changed=true" >> $GITHUB_ENV
+        continue-on-error: true
 
-      - name: Code Checkout
+      - name: Set Deploy Environment for PR/Push
+        run: echo "DEPLOY_ENV=${{ matrix.environment }}" >> $GITHUB_ENV
+
+      - name: Checkout Code
         id: checkout
         uses: actions/checkout@v4.1.1
 
-      - name: JSON Parse
+      - name: Set Azure Environment Variables from JSON
         id: parse
         env:
           AZJSON: ${{ secrets.AZJSON }}
@@ -61,7 +78,7 @@ jobs:
           echo RESOURCE_GROUP=$RESOURCE_GROUP >> $GITHUB_ENV
           echo STORAGE_ACCOUNT=$STORAGE_ACCOUNT >> $GITHUB_ENV
           echo CONTAINER_NAME=$CONTAINER_NAME >> $GITHUB_ENV
-    
+
       - name: Azure Authentication
         id: login
         run: |
@@ -101,6 +118,7 @@ jobs:
 
       - name: Terraform Plan
         id: tplan
+        if: github.event_name == 'pull_request'
         run: |
           terraform plan -no-color
 
@@ -150,7 +168,7 @@ jobs:
               body: output
             })
 
-      - name: Terraform Apply
+      - name: Apply Terraform Changes (Only on Main)
         id: apply
         if: github.ref == 'refs/heads/main'
         env:
