@@ -1,4 +1,4 @@
-name: "Terraform Infra Deploy Pipeline (Child)"
+name: "Terraform Infra Deploy Pipeline"
 
 on:
   workflow_call:
