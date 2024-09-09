@@ -14,7 +14,7 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform'
+    name: 'Terraform Plan'
     runs-on: 'ubuntu-latest'
 
     defaults:
@@ -135,9 +135,21 @@ jobs:
               body: output
             })
 
-      - name: Terraform Apply
-        environment:
-          name: 'prod'
+  terraform_apply:
+    name: 'Terraform Apply'
+    needs: terraform
+    if: github.ref == 'refs/heads/main'
+    runs-on: 'ubuntu-latest'
+    environment: 'prod'
+    defaults:
+      run:
+        working-directory: ${{ inputs.environment }}
+    steps:
+      - name: Code Checkout
+        id: checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: Terraform Apply        
         id: apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
