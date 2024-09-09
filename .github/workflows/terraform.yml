@@ -24,12 +24,12 @@ jobs:
     steps:
       - name: Trigger Dev Workflow
         if: github.event_name == 'pull_request' || github.event.inputs.environment == 'dev'
-        uses: ./.github/workflows/terraform-child-workflow.yml
+        uses: ./terraform-child-workflow.yml
         with:
           environment: 'dev'
 
       - name: Trigger Prod Workflow
         if: github.event_name == 'pull_request' || github.event.inputs.environment == 'prod'
-        uses: ./.github/workflows/terraform-child-workflow.yml
+        uses: .terraform-child-workflow.yml
         with:
           environment: 'prod'
