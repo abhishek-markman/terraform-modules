@@ -1,10 +1,10 @@
 name: "Terraform Infra Deploy Pipeline"
 
 on:
-  # pull_request:
-  # push:
-  #   branches:
-  #     - main
+  pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -13,8 +13,8 @@ on:
         required: true
         default: 'dev'
         options:
-        - 'dev'
-        - 'prod'
+          - 'dev'
+          - 'prod'
 
 jobs:
   terraform:
@@ -24,9 +24,20 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ${{ inputs.environment }}
+        working-directory: ${{ env.DEPLOY_ENV }}  # Use a custom environment variable
 
     steps:
+      - name: Set Environment for PR/Push
+        if: github.event_name != 'workflow_dispatch'  # This will execute if it's a push or PR
+        run: |
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "DEPLOY_ENV=dev" >> $GITHUB_ENV   # Set dev as default for push/PR
+          fi
+      
+      - name: Set Environment for Manual Dispatch
+        if: github.event_name == 'workflow_dispatch'  # This will execute if manually triggered
+        run: echo "DEPLOY_ENV=${{ inputs.environment }}" >> $GITHUB_ENV  # Set based on input
+
       - name: Code Checkout
         id: checkout
         uses: actions/checkout@v4.1.1
@@ -73,11 +84,11 @@ jobs:
         run: |
           pip install checkov
 
-      # - name: Checkov Static Test
-      #   id: static
-      #   if: github.event_name == 'pull_request'
-      #   run: |
-      #     checkov -d . --download-external-modules true
+      - name: Checkov Static Test
+        id: static
+        if: github.event_name == 'pull_request'
+        run: |
+          checkov -d . --download-external-modules true
 
       - name: Terraform Format
         id: fmt
@@ -91,16 +102,16 @@ jobs:
       - name: Terraform Plan
         id: tplan
         run: |
-            terraform plan -no-color
+          terraform plan -no-color
 
       - name: Checkov Plan Test
         id: cplan
         if: github.event_name == 'pull_request'
         run: |
-            terraform plan --out tfplan.binary
-            terraform show -json tfplan.binary > tfplan.json
-            ls
-            checkov -f tfplan.json --framework terraform_plan
+          terraform plan --out tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+          ls
+          checkov -f tfplan.json --framework terraform_plan
 
       - name: Pull Request Comment
         id: comment
@@ -141,5 +152,6 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        #if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
+        environment: ${{ env.DEPLOY_ENV }}  # Reference the environment variable
         run: terraform apply -auto-approve
