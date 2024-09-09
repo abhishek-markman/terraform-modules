@@ -172,5 +172,5 @@ jobs:
         id: apply
         if: github.ref == 'refs/heads/main'
         env:
-          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}  # Use environment variable
+          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
         run: terraform apply -auto-approve
