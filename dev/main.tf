@@ -93,7 +93,7 @@ module "azuread_application" {
   key_vault_id                  = module.key_vault.key_vault_id
   required_resource_access = [
     {
-      resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
+      resource_app_id = "00000003-0000-0000-c000-000000000000" ## Microsoft Graph
       resource_access = [
         {
           id   = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0" # email permission
