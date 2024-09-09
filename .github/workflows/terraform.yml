@@ -24,7 +24,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ${{ env.DEPLOY_ENV }}  # Use a custom environment variable
+        working-directory: ${{ env.DEPLOY_ENV }}
 
     steps:
       - name: Set Environment for PR/Push
@@ -153,5 +153,6 @@ jobs:
       - name: Terraform Apply
         id: apply
         if: github.ref == 'refs/heads/main'
-        environment: ${{ env.DEPLOY_ENV }}  # Reference the environment variable
+        env:
+          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}  # Use environment variable
         run: terraform apply -auto-approve
