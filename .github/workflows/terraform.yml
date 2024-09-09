@@ -1,6 +1,10 @@
 name: "Terraform Infra Deploy Pipeline"
 
 on:
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       environment:
@@ -14,7 +18,7 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform Plan'
+    name: 'Terraform'
     runs-on: 'ubuntu-latest'
 
     defaults:
@@ -135,21 +139,7 @@ jobs:
               body: output
             })
 
-  terraform_apply:
-    name: 'Terraform Apply'
-    needs: terraform
-    if: github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest'
-    environment: 'prod'
-    defaults:
-      run:
-        working-directory: ${{ inputs.environment }}
-    steps:
-      - name: Code Checkout
-        id: checkout
-        uses: actions/checkout@v4.1.1
-
-      - name: Terraform Apply        
+      - name: Terraform Apply
         id: apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
