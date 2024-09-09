@@ -19,9 +19,12 @@ on:
         - 'prod'
 
 jobs:
-  trigger-child-workflows:
-    runs-on: ubuntu-latest
+  terraform:
+    name: 'Terraform'
+    runs-on: 'ubuntu-latest'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
       - name: Trigger Dev Workflow
         if: github.event_name == 'pull_request' || github.event.inputs.environment == 'dev'
         uses: ./.github/workflows/terraform-child-workflow.yml
