@@ -1,6 +1,10 @@
 name: "Terraform Infra Deploy Pipeline"
 
 on:
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       environment:
@@ -136,8 +140,6 @@ jobs:
             })
 
       - name: Terraform Apply
-        environment:
-          name: 'prod'
         id: apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
