@@ -1,12 +1,6 @@
 name: "Terraform Infra Deploy Pipeline"
 
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -22,17 +16,128 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: 'ubuntu-latest'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.1
-      - name: Trigger Dev Workflow
-        if: github.event_name == 'pull_request' || github.event.inputs.environment == 'dev'
-        uses: ./.github/workflows/terraform-child-workflow.yml
-        with:
-          environment: 'dev'
 
-      - name: Trigger Prod Workflow
-        if: github.event_name == 'pull_request' || github.event.inputs.environment == 'prod'
-        uses: ./.github/workflows/terraform-child-workflow.yml
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.environment }}
+
+    steps:
+      - name: Code Checkout
+        id: checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: JSON Parse
+        id: parse
+        env:
+          AZJSON: ${{ secrets.AZJSON }}
+        run: |
+          ARM_CLIENT_ID=$(echo $AZJSON | jq -r '.["clientId"]')
+          ARM_CLIENT_SECRET=$(echo $AZJSON | jq -r '.["clientSecret"]')
+          ARM_TENANT_ID=$(echo $AZJSON | jq -r '.["tenantId"]')
+          ARM_SUBSCRIPTION_ID=$(echo $AZJSON | jq -r '.["subscriptionId"]')
+          RESOURCE_GROUP=$(echo $AZJSON | jq -r '.["resourceGroup"]')
+          STORAGE_ACCOUNT=$(echo $AZJSON | jq -r '.["storageAccount"]')
+          CONTAINER_NAME=$(echo $AZJSON | jq -r '.["containerName"]')
+          echo ARM_CLIENT_ID=$ARM_CLIENT_ID >> $GITHUB_ENV
+          echo ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET >> $GITHUB_ENV
+          echo ARM_TENANT_ID=$ARM_TENANT_ID >> $GITHUB_ENV
+          echo ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID >> $GITHUB_ENV
+          echo RESOURCE_GROUP=$RESOURCE_GROUP >> $GITHUB_ENV
+          echo STORAGE_ACCOUNT=$STORAGE_ACCOUNT >> $GITHUB_ENV
+          echo CONTAINER_NAME=$CONTAINER_NAME >> $GITHUB_ENV
+    
+      - name: Azure Authentication
+        id: login
+        run: |
+          az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+          az account set --subscription $ARM_SUBSCRIPTION_ID
+
+      - name: Install Terraform package
+        uses: hashicorp/setup-terraform@v2.0.3
         with:
-          environment: 'prod'
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP"
+
+      - name: Install Checkov
+        id: checkov
+        if: github.event_name == 'pull_request'
+        run: |
+          pip install checkov
+
+      # - name: Checkov Static Test
+      #   id: static
+      #   if: github.event_name == 'pull_request'
+      #   run: |
+      #     checkov -d . --download-external-modules true
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: tplan
+        run: |
+            terraform plan -no-color
+
+      - name: Checkov Plan Test
+        id: cplan
+        if: github.event_name == 'pull_request'
+        run: |
+            terraform plan --out tfplan.binary
+            terraform show -json tfplan.binary > tfplan.json
+            ls
+            checkov -f tfplan.json --framework terraform_plan
+
+      - name: Pull Request Comment
+        id: comment
+        uses: actions/github-script@v3
+        if: github.event_name == 'pull_request'
+        env:
+          TPLAN: "terraform\n${{ steps.tplan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GHTOKEN }}
+          script: |
+            const output = `
+            ### Pull Request Information
+            Please review this PR. Merging the PR will run Terraform Apply with the below plan.
+
+            #### Terraform Checks
+            Init: \`${{ steps.init.outcome }}\`
+            Format: \`${{ steps.fmt.outcome }}\`
+            Validation: \`${{ steps.validate.outcome }}\`
+            Plan: \`${{ steps.tplan.outcome }}\`
+
+            #### Checkov
+            Static: \`${{ steps.static.outcome }}\`
+            Plan: \`${{ steps.cplan.outcome }}\`
+
+            <details><summary>Plan File</summary>
+          
+            \`\`\`${process.env.TPLAN}\`\`\`
+          
+            </details>
+
+            `
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Apply
+        environment:
+          name: 'prod'
+        id: apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
