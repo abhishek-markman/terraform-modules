@@ -1,13 +1,12 @@
-output "postgresql_flexible_administrator_login" {
-  description = "Administrator login for PostgreSQL Flexible server."
-  value       = azurerm_postgresql_flexible_server.postgresql_flexible_server.administrator_login
+output "administrator_login_kv_secret" {
+  description = "Administrator login Key vault secret ID for PostgreSQL Flexible server."
+  value       = azurerm_key_vault_secret.postgresql_flexible_administrator_login.id
   sensitive   = true
 }
 
-output "postgresql_flexible_administrator_password" {
-  description = "Administrator password for PostgreSQL Flexible server."
-  value       = local.administrator_password
-  sensitive   = true
+output "administrator_password_kv_secret" {
+  description = "Administrator password Key vault secret ID for PostgreSQL Flexible server."
+  value       = azurerm_key_vault_secret.postgresql_flexible_administrator_password.id
 }
 
 output "postgresql_flexible_databases_names" {

@@ -13,6 +13,12 @@ variable "postgresql_flexible_server_name" {
   type        = string
 }
 
+variable "key_vault_id" {
+  description = "Id of the key vault to access secret"
+  type        = string
+  default     = null
+}
+
 variable "tier" {
   description = "Tier for PostgreSQL Flexible server sku : https://docs.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-compute-storage. Possible values are: GeneralPurpose, Burstable, MemoryOptimized."
   type        = string
