@@ -66,6 +66,25 @@ resource "random_password" "administrator_password" {
   special = true
 }
 
+#----------------------------------------------------------
+# Resource creation: Key Vault Secret
+#----------------------------------------------------------
+resource "azurerm_key_vault_secret" "postgresql_flexible_administrator_login" {
+  name         = "${var.postgresql_flexible_server_name}-login-id"
+  value        = var.administrator_login
+  key_vault_id = var.key_vault_id
+}
+
+#----------------------------------------------------------
+# Resource creation: Key Vault Secret
+#----------------------------------------------------------
+resource "azurerm_key_vault_secret" "postgresql_flexible_administrator_password" {
+  name         = "${var.postgresql_flexible_server_name}-password"
+  value        = local.administrator_password
+  key_vault_id = var.key_vault_id
+}
+
+
 resource "azurerm_postgresql_flexible_server_database" "postgresql_flexible_db" {
   for_each = var.databases
 

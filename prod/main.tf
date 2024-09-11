@@ -40,12 +40,20 @@ module "storage_account" {
   ]
 }
 
+module "key_vault" {
+  source              = "../modules/key_vault"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main_rg.name
+  key_vault_name      = "${local.name_prefix}-kv"
+}
+
 module "postgresql_flexible" {
   source                          = "../modules/postgresql_flexible"
   postgresql_flexible_server_name = "${local.name_prefix}-postgresql"
   location                        = var.location
   resource_group_name             = azurerm_resource_group.main_rg.name
   tier                            = "Burstable"
+  key_vault_id                    = module.key_vault.key_vault_id
   size                            = "B1ms"
   storage_mb                      = 32768
   postgresql_version              = 16
@@ -75,13 +83,6 @@ module "app_service_plan" {
   os_type               = "Linux"
   sku_name              = "B2"
   worker_count          = 2
-}
-
-module "key_vault" {
-  source              = "../modules/key_vault"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.main_rg.name
-  key_vault_name      = "${local.name_prefix}-kv"
 }
 
 module "azuread_application" {
@@ -147,8 +148,8 @@ module "linux_app_services" {
     "AZURE_CONTAINER"         = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
     "DB_NAME"                 = "${local.name_prefix}-db"
     "DB_HOST"                 = module.postgresql_flexible.postgresql_flexible_fqdn
-    "DB_USER"                 = module.postgresql_flexible.postgresql_flexible_administrator_login
-    "DB_PASSWORD"             = module.postgresql_flexible.postgresql_flexible_administrator_password
+    "DB_USER"                 = "@Microsoft.KeyVault(SecretUri=${module.postgresql_flexible.administrator_login_kv_secret})"
+    "DB_PASSWORD"             = "@Microsoft.KeyVault(SecretUri=${module.postgresql_flexible.administrator_password_kv_secret})"
     "DB_PORT"                 = 5432
     "DJANGO_SETTINGS_MODULE"  = "laurel.settings.${var.environment}"
     "MICROSOFT_CLIENT_ID"     = module.azuread_application.client_id
