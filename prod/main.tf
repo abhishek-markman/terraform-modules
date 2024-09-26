@@ -167,4 +167,9 @@ module "linux_app_services" {
       }
     }
   }
+
+  enable_custom_domain_mapping = true
+  azure_dns_zone_name          = "laurel-ag.biz"
+  azure_dns_zone_name_rg_name  = "domain-rg"
+  a_record_enabled             = true
 }
