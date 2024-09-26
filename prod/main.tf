@@ -146,7 +146,7 @@ module "linux_app_services" {
     "AZURE_ACCOUNT_KEY"       = module.storage_account.storage_account_properties.primary_access_key
     "AZURE_ACCOUNT_NAME"      = module.storage_account.storage_account_properties.name
     "AZURE_CONTAINER"         = module.storage_account.storage_blob_containers["${var.unique_name}-${var.environment}"].name
-    "DB_NAME"                 = "${local.name_prefix}-db"
+    "DB_NAME"                 = "laurel-${var.environment}"
     "DB_HOST"                 = module.postgresql_flexible.postgresql_flexible_fqdn
     "DB_USER"                 = "@Microsoft.KeyVault(SecretUri=${module.postgresql_flexible.administrator_login_kv_secret})"
     "DB_PASSWORD"             = "@Microsoft.KeyVault(SecretUri=${module.postgresql_flexible.administrator_password_kv_secret})"
